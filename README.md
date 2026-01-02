@@ -1,68 +1,123 @@
-# heavy_secscan.sh
+# 🔨 Heavy SecScan CLI
 
-Wrapper de reconocimiento/pentesting (pasivo + semi-intrusivo) con salida en Markdown + log bruto.
+Wrapper de reconocimiento y pentesting (pasivo + semi-intrusivo) con salida en Markdown + log bruto.
 
-## Requisitos
-- amass, subfinder, dnsx, httpx, wafw00f, whatweb, ffuf, nuclei
-- naabu o nmap (uno de los dos)
-- Opcional: masscan, gowitness, wordlists (SecLists)
+---
 
-## Variables ajustables (env)
-- `TOP_PORTS` (por defecto 200) — usa 1000 para más cobertura
-- `HTTP_PORTS` (por defecto `80,443,8080,8443,8000,9000`)
-- `WORDLIST` (ruta wordlist ffuf, ej. `/usr/share/seclists/Discovery/Web-Content/common.txt`)
-- `SUBWL` (wordlist subdominios)
-- `NUCLEI_TEMPLATES` (ruta de templates nuclei; por defecto `~/nuclei-templates`)
-- `NUCLEI_SEVERITY` (low,medium,high,critical)
-- `NUCLEI_TAGS` (ej. exposure,misconfig,cve)
-- `FFUF_THREADS` (por defecto 50)
-- `TIMEOUT` (por defecto 10)
-- `USE_MASSCAN` (true/false) y `MASSCAN_RATE`
+## 🚀 Quick Start
 
-## Uso
 ```bash
+# Instalar dependencias (macOS)
+brew install nmap amass subfinder httpx wafw00f whatweb ffuf nuclei gowitness
+
+# Clonar y ejecutar
+git clone https://github.com/MAXMARDONES/secscan-cli.git
+cd secscan-cli
 chmod +x heavy_secscan.sh
-# con flags
+./heavy_secscan.sh -d ejemplo.com -d https://app.otro.com/ruta
+```
+
+### Linux (Kali/Parrot)
+```bash
+# La mayoría ya vienen instalados, si no:
+sudo apt install nmap amass whatweb ffuf
+# Para el resto:
+go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest
+go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest
+go install -v github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest
+pip3 install wafw00f
+```
+
+---
+
+## 📋 Requisitos
+
+| Herramienta | Qué hace |
+|-------------|----------|
+| `nmap` | Port scanning |
+| `amass` | Subdomain enumeration (pasivo) |
+| `subfinder` | Subdomain discovery |
+| `httpx` | HTTP probing |
+| `wafw00f` | WAF detection |
+| `whatweb` | Web fingerprinting |
+| `ffuf` | Directory fuzzing |
+| `nuclei` | Vulnerability scanning |
+| `gowitness` | Screenshots (opcional) |
+
+---
+
+## 🎯 Uso
+
+### Con flags (directo)
+```bash
 ./heavy_secscan.sh -d dominio.com -d https://app.ejemplo.com/ruta
-# o interactivo
+```
+
+### Interactivo
+```bash
 ./heavy_secscan.sh
-# ingresa dominios/URLs, termina con 'done'
+# Ingresa dominios/URLs, termina con 'done'
 ```
 
 Para cada dominio/URL se pregunta el modo:
-- (1) solo esa ruta/base (single)
-- (2) dominio completo + subdominios (recursive)
+- `(1)` Solo esa ruta/base (single path scan)
+- `(2)` Dominio completo + subdominios (full recursive)
 
-## Salidas
-- `heavy_report_<fecha>.md` — resumen Markdown
-- `heavy_raw_<fecha>.log` — log completo de las herramientas
+---
 
-## Nota
-El script **no instala dependencias**. Instala los binarios requeridos (Kali/Parrot ya los incluye en su mayoría; en macOS puedes usar brew). Ajusta wordlists y rutas según tu entorno.### Add File: /Users/max/Desktop/test/light-mcp-server.js
-// Minimal backend HTTP (Node.js) – super light.
-// No dependencies beyond Node stdlib. To run: node light-mcp-server.js
-// Routes:
-//   GET /health  -> 200 ok
-//   GET /echo?q= -> echoes query
+## ⚙️ Variables de Entorno
 
-const http = require('http');
-const port = process.env.PORT || 3000;
+| Variable | Default | Descripción |
+|----------|---------|-------------|
+| `TOP_PORTS` | 200 | Número de puertos top a escanear (usa 1000 para más cobertura) |
+| `HTTP_PORTS` | 80,443,8080,8443,8000,9000 | Puertos HTTP a probar |
+| `WORDLIST` | /usr/share/seclists/.../common.txt | Wordlist para ffuf |
+| `SUBWL` | - | Wordlist para subdominios |
+| `NUCLEI_TEMPLATES` | ~/nuclei-templates | Ruta de templates nuclei |
+| `NUCLEI_SEVERITY` | low,medium,high,critical | Severidades a reportar |
+| `NUCLEI_TAGS` | exposure,misconfig,cve | Tags de templates |
+| `FFUF_THREADS` | 50 | Threads para fuzzing |
+| `TIMEOUT` | 10 | Timeout en segundos |
+| `USE_MASSCAN` | false | Usar masscan en vez de nmap |
+| `MASSCAN_RATE` | 1000 | Rate de masscan |
 
-const server = http.createServer((req, res) => {
-  const url = new URL(req.url, `http://${req.headers.host}`);
-  if (url.pathname === '/health') {
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    return res.end(JSON.stringify({ status: 'ok' }));
-  }
-  if (url.pathname === '/echo') {
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    return res.end(JSON.stringify({ q: url.searchParams.get('q') || '' }));
-  }
-  res.writeHead(404, { 'Content-Type': 'application/json' });
-  res.end(JSON.stringify({ error: 'not found' }));
-});
+### Ejemplo con variables:
+```bash
+TOP_PORTS=1000 NUCLEI_SEVERITY=high,critical ./heavy_secscan.sh -d target.com
+```
 
-server.listen(port, () => {
-  console.log(`Light server listening on :${port}`);
-});
+---
 
+## 📦 Salidas
+
+| Archivo | Contenido |
+|---------|-----------|
+| `heavy_report_<fecha>.md` | Resumen en Markdown |
+| `heavy_raw_<fecha>.log` | Log completo de todas las herramientas |
+
+---
+
+## 🔍 Qué escanea
+
+1. **Subdominios** - amass, subfinder
+2. **HTTP Probing** - httpx (encuentra qué responde)
+3. **Port Scanning** - nmap top ports
+4. **WAF Detection** - wafw00f
+5. **Fingerprinting** - whatweb (tecnologías)
+6. **Directory Fuzzing** - ffuf (rutas ocultas)
+7. **Vulnerabilities** - nuclei templates
+8. **Screenshots** - gowitness (opcional)
+
+---
+
+## ⚠️ Disclaimer
+
+Solo usar en dominios propios o con autorización explícita. El escaneo de puertos y fuzzing puede ser detectado y/o ilegal sin permiso.
+
+---
+
+## 🍎 Companion: Rotten Apples MCP
+
+Para scans rápidos desde Claude/Cursor, usa el MCP server:
+- https://github.com/MAXMARDONES/rottenapples-mcp
+- `claude mcp add --transport http rottenapples https://rottenapples-mcp.vercel.app/mcp`
